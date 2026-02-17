@@ -1805,7 +1805,19 @@ EOF
     show_nixos_config
 
     # 安装系统
-    nixos-install --root /os --no-root-passwd -j $threads
+    if ! nixos-install --root /os --no-root-passwd -j $threads; then
+        ret=$?
+        if [ $ret -eq 135 ]; then
+            warn "nixos-install got SIGBUS, retry with low-resource mode"
+            mkdir -p /os/tmp
+            export TMPDIR=/os/tmp
+            export NIX_BUILD_CORES=1
+            export NIX_CONFIG="$(printf '%s\nmax-jobs = 1\ncores = 1\n' "$NIX_CONFIG")"
+            nixos-install --root /os --no-root-passwd -j 1
+        else
+            return $ret
+        fi
+    fi
 
     # 设置密码
     if ! is_need_set_ssh_keys; then
