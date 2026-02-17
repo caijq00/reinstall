@@ -1465,33 +1465,20 @@ Continue?
     }
 
     setos_nixos() {
-        if is_use_cloud_image; then
-            if is_in_china; then
-                mirror=https://mirror.sjtu.edu.cn/nix-channels
-            else
-                mirror=https://nixos.org/channels
-            fi
+        if is_in_china; then
+            mirror=https://mirrors.tuna.tsinghua.edu.cn/nix-channels
         else
-            # 传统安装:
-            # 1) 国内优先交大，其次南大，最后官方
-            # 2) 自动探测可用源，避免单一镜像证书/网络异常导致失败
-            if is_in_china; then
-                mirrors='https://mirror.sjtu.edu.cn/nix-channels https://mirror.nju.edu.cn/nix-channels https://nixos.org/channels'
-            else
-                mirrors='https://nixos.org/channels'
-            fi
+            mirror=https://nixos.org/channels
+        fi
 
-            for candidate in $mirrors; do
-                # 该服务器文件缓存 miss 时会响应 206 + Location 头
-                # 但 curl 这种情况不会重定向，所以添加 text 类型让它不要报错
-                if test_url_grace "$candidate/nixos-$releasever/store-paths.xz" 'xz text'; then
-                    mirror=$candidate
-                    eval ${step}_mirror=$mirror
-                    return
-                fi
-            done
-
-            error_and_exit "All NixOS mirrors are not accessible: $mirrors"
+        if is_use_cloud_image; then
+            :
+        else
+            # 传统安装
+            # 该服务器文件缓存 miss 时会响应 206 + Location 头
+            # 但 curl 这种情况不会重定向，所以添加 text 类型让它不要报错
+            test_url $mirror/nixos-$releasever/store-paths.xz 'xz text'
+            eval ${step}_mirror=$mirror
         fi
     }
 
