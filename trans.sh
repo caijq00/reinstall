@@ -1688,7 +1688,11 @@ install_nixos() {
     fi
 
     # 安装 nixos-install-tools
-    nix-env -iA nixpkgs.nixos-install-tools -j $threads
+    # 某些环境 root profile 已是 nix profile 格式，会与 nix-env 不兼容
+    # 这里使用独立 profile，避免冲突
+    nix_tools_profile=/nix/var/nix/profiles/reinstall
+    nix-env -p "$nix_tools_profile" -iA nixpkgs.nixos-install-tools -j $threads
+    PATH="$nix_tools_profile/bin:$PATH"
 
     # 生成配置并显示
     nixos-generate-config --root /os
@@ -1810,7 +1814,7 @@ EOF
     fi
 
     # 清理
-    nix-env -e '*'
+    nix-env -p "$nix_tools_profile" -e '*'
     # /nix/var/nix/profiles/system/sw/bin/nix-collect-garbage -d
     /nix/var/nix/profiles/system/sw/bin/nixos-enter --root /os -- \
         /run/current-system/sw/bin/nix-collect-garbage -d
