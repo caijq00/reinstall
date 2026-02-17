@@ -160,6 +160,7 @@ show_url_in_args() {
 
 curl() {
     is_have_cmd curl || install_pkg curl
+    ensure_ca_certificates
 
     # 显示 url
     show_url_in_args "$@" >&2
@@ -214,6 +215,14 @@ is_in_windows() {
 
 is_in_alpine() {
     [ -f /etc/alpine-release ]
+}
+
+ensure_ca_certificates() {
+    if is_in_alpine && [ -z "$_ca_cert_ready" ]; then
+        apk add ca-certificates >/dev/null 2>&1 || true
+        update-ca-certificates >/dev/null 2>&1 || true
+        _ca_cert_ready=1
+    fi
 }
 
 is_use_cloud_image() {
