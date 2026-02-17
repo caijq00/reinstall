@@ -1457,7 +1457,7 @@ Continue?
 
     setos_nixos() {
         if is_in_china; then
-            mirror=https://mirror.nju.edu.cn/nix-channels
+            mirror=https://mirror.sjtu.edu.cn/nix-channels
         else
             mirror=https://nixos.org/channels
         fi
