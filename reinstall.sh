@@ -2193,9 +2193,16 @@ install_pkg() {
             DEBIAN_FRONTEND=noninteractive apt-get install -y $pkg
             ;;
         nix-env)
-            # 不指定 channel 会很慢，而且很占内存
-            [ -z "$nix_updated" ] && nix-channel --update && nix_updated=1
-            nix-env -iA nixos.$pkg
+            # 新版 NixOS 的 root profile 可能不兼容 nix-env，优先使用 nix profile
+            if is_have_cmd nix; then
+                nix profile install "nixpkgs#$pkg" ||
+                    nix profile install --impure "nixpkgs#$pkg"
+                PATH="/nix/var/nix/profiles/per-user/root/profile/bin:$HOME/.nix-profile/bin:$PATH"
+            else
+                # 旧环境回退
+                [ -z "$nix_updated" ] && nix-channel --update && nix_updated=1
+                nix-env -iA nixos.$pkg
+            fi
             ;;
         esac
     }
