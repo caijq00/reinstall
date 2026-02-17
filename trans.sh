@@ -1677,6 +1677,10 @@ install_nixos() {
 
     # 添加 channel
     # shellcheck disable=SC2154
+    if is_in_china; then
+        # 强制安装阶段仅使用指定镜像缓存，避免回落到 cache.nixos.org
+        export NIX_CONFIG="$(printf 'substituters = %s/store\nfallback = false\n' "$mirror")"
+    fi
     nix-channel --add $mirror/nixos-$releasever nixpkgs
     nix-channel --update
 
@@ -1708,6 +1712,7 @@ install_nixos() {
 
     if is_in_china; then
         nix_substituters="nix.settings.substituters = lib.mkForce [ \"$mirror/store\" ];"
+        nix_fallback='nix.settings.fallback = lib.mkForce false;'
     fi
 
     if [ -e /os/swapfile ] && $keep_swap; then
@@ -1752,6 +1757,7 @@ EOF
 $nix_bootloader
 $nix_swap
 $nix_substituters
+$nix_fallback
 boot.kernelParams = [ $(get_ttys console= | quote_word) ];
 services.openssh.enable = true;
 $nix_ssh_keys_or_PermitRootLogin
